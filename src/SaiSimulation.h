@@ -37,43 +37,68 @@ public:
 	 */
 	SaiSimulation(const std::string& path_to_world_file, bool verbose = false);
 
-	// \brief Destructor to clean up internal Sai-Simulation model
+	/// @brief Destructor to clean up internal Sai-Simulation model
 	~SaiSimulation() = default;
 
 	/**
 	 * @brief Get degrees of freedom of a particular robot.
 	 *        NOTE: Assumes serial or tree chain robot.
-	 * @param robot_name Name of the robot for which transaction is required.
+	 * @param robot_name Name of the robot.
 	 */
 	const unsigned int dof(const std::string& robot_name) const;
+
+	/**
+	 * @brief Get number of joints of a particular robot.
+	 * @param robot_name Name of the robot.
+	 */
 	const unsigned int qSize(const std::string& robot_name) const;
 
+	/**
+	 * @brief Reset the simulated world to the initial state given by a world
+	 * file.
+	 *
+	 * @param path_to_world_file the path to the world file
+	 * @param verbose flag to print debug information
+	 */
 	void resetWorld(const std::string& path_to_world_file,
 					bool verbose = false);
 
+	/// @brief getter for the simulated timestep
 	const double& timestep() const { return _timestep; }
+	/// @brief setter for the simulated timestep (in seconds)
 	void setTimestep(const double dt);
-
+	/// @brief getter for the simulated time
 	const double& time() const { return _time; }
-
+	/// @brief getter if the simulation is paused
 	const bool& isPaused() const { return _is_paused; }
+	/// @brief pause the simulation
 	void pause() { _is_paused = true; }
+	/// @brief unpause the simulation
 	void unpause() { _is_paused = false; }
-
+	/// @brief enable the joint limits for a given robot
 	void enableJointLimits(const std::string& robot_name);
+	/// @brief disable the joint limits for a given robot
 	void disableJointLimits(const std::string& robot_name);
-
+	/// @brief enable the gravity compensation for all robots
 	void enableGravityCompensation(const bool enable) {
 		_gravity_compensation_enabled = enable;
 	}
+	/// @brief getter if the gravity compensation is enabled
 	const bool& isGravityCompensationEnabled() const {
 		return _gravity_compensation_enabled;
 	}
-
+	/// @brief getter for the world gravity vector
 	const Vector3d getWorldGravity() const {
 		return _world->getGravity().eigen();
 	}
-
+	/**
+	 * @brief Computes the mass matrix for a given robot in the latest robot
+	 * state from the simulation
+	 *
+	 * @param robot_name the name of the robot for which the mass matrix is
+	 * required
+	 * @return const MatrixXd the mass matrix
+	 */
 	const MatrixXd computeAndGetMassMatrix(const std::string& robot_name);
 
 	/**
@@ -103,7 +128,8 @@ public:
 		const std::string& robot_name) const;
 
 	/**
-	 * @brief Read back position and orientation of an object (dynamic or static).
+	 * @brief Read back position and orientation of an object (dynamic or
+	 * static).
 	 * @param object_name Name of the object for which transaction is required.
 	 * @return pose of that object.
 	 */
@@ -111,9 +137,9 @@ public:
 
 	/**
 	 * @brief Set the Object Pose of a dynamic object
-	 * 
-	 * @param object_name 
-	 * @param pose 
+	 *
+	 * @param object_name
+	 * @param pose
 	 */
 	void setObjectPose(const std::string& object_name,
 					   const Eigen::Affine3d& pose) const;
@@ -175,8 +201,8 @@ public:
 						 const Eigen::VectorXd& tau);
 
 	/**
-	 * @brief Set the force and torque for the given object (dynamic object only), expressed in world
-	 * frame (xyz force first, xyz torques second)
+	 * @brief Set the force and torque for the given object (dynamic object
+	 * only), expressed in world frame (xyz force first, xyz torques second)
 	 *
 	 * @param object_name
 	 * @param tau
@@ -323,8 +349,9 @@ public:
 	void setDynamicsEnabled(const bool enabled,
 							const string robot_or_object_name);
 
-	void setJointDamping(const double damping, const string robot_or_object_name = "",
-					const string link_name = "");
+	void setJointDamping(const double damping,
+						 const string robot_or_object_name = "",
+						 const string link_name = "");
 
 	/**
 	 * @brief Set the Collision Restitution for all objects, or a specific
@@ -429,53 +456,103 @@ public:
 	const Eigen::Affine3d getRobotBaseTransform(
 		const std::string& robot_name) const;
 
+	/**
+	 * @brief Returns a handle to the internal dynamic world object
+	 */
 	const std::shared_ptr<cDynamicWorld>& getDynamicWorld() const {
 		return _world;
 	}
 
+	/// @brief Get the names of the robots in the simulation
 	const std::vector<std::string> getRobotNames() const;
+	/// @brief Get the names of the objects in the simulation
 	const std::vector<std::string> getObjectNames() const;
 
+	/**
+	 * @brief check is a model (robot or object) exists in the world
+	 *
+	 * @param model_name the name of the model
+	 * @return true if the model exists in the world, false otherwise
+	 */
 	const bool modelExistsInWorld(const std::string& model_name) const {
 		return robotExistsInWorld(model_name) ||
 			   dynamicObjectExistsInWorld(model_name) ||
 			   staticObjectExistsInWorld(model_name);
 	}
-
+	/**
+	 * @brief check if a robot exists in the world, and optionally if a link
+	 * exists in the robot
+	 *
+	 * @param robot_name the name of the robot
+	 * @param link_name the name of the link (leave empty to check if the robot
+	 * exists)
+	 * @return true if the robot or link exists in the world, false otherwise
+	 */
 	const bool robotExistsInWorld(const std::string& robot_name,
 								  const std::string link_name = "") const;
-
+	/**
+	 * @brief check if a dynamic object exists in the world
+	 *
+	 * @param object_name the name of the object
+	 * @return true if the object exists in the world, false otherwise
+	 */
 	const bool dynamicObjectExistsInWorld(const std::string& object_name) const;
+	/**
+	 * @brief check if a static object exists in the world
+	 *
+	 * @param object_name the name of the object
+	 * @return true if the object exists in the world, false otherwise
+	 */
 	const bool staticObjectExistsInWorld(const std::string& object_name) const;
 
 private:
+	/**
+	 * @brief finds the index of the simulated force sensor in the list of force
+	 * sensors. Returns -1 if the sensor is not found
+	 *
+	 * @param robot_or_object_name the name of the robot or object to which the
+	 * sensor is attached
+	 * @param link_name the name of the link to which the sensor is attached
+	 * @return const int the index of the force sensor in the list of force
+	 * sensors (or -1 if not found)
+	 */
 	const int findSimulatedForceSensor(const std::string& robot_or_object_name,
 									   const std::string& link_name) const;
 
+	/**
+	 * @brief Set the joint torques for all robots and objects in the simulation, after applying the correct transformations and potentially gravity compensation
+	 * and other effects
+	 */
 	void setAllJointTorquesInternal();
 
-	/**
-	 * @brief Internal dynamics world object.
-	 */
+	/// @brief Internal dynamics world object.
 	std::shared_ptr<cDynamicWorld> _world;
-
+	/// @brief Internal map of robot filenames.
 	std::map<std::string, std::string> _robot_filenames;
+	/// @brief Internal map of robot models.
 	std::map<std::string, std::shared_ptr<SaiModel::SaiModel>> _robot_models;
+	/// @brief applied torques to the robots (before gravity compensation and other effects)
 	std::map<std::string, Eigen::VectorXd> _applied_robot_torques;
+	/// @brief applied torques to the objects (before transformation)
 	std::map<std::string, Eigen::Matrix<double, 6, 1>> _applied_object_torques;
 
+	/// @brief flag to know if the simulation is paused
 	bool _is_paused;
+	/// @brief current simulation time
 	double _time;
+	/// @brief simulation timestep
 	double _timestep;
-
+	/// @brief flag to know if gravity compensation is enabled
 	bool _gravity_compensation_enabled;
-
+	/// @brief vector of simulated force sensors
 	std::vector<std::shared_ptr<ForceSensorSim>> _force_sensors;
-
+	/// @brief initial pose of dynamic objects
 	std::map<std::string, Eigen::Affine3d> _dyn_objects_init_pose;
+	/// @brief pose of static objects
 	std::map<std::string, Eigen::Affine3d> _static_objects_pose;
-
+	/// @brief current pose of dynamic objects
 	std::map<std::string, std::shared_ptr<Eigen::Affine3d>> _dyn_objects_pose;
+	/// @brief current velocity of dynamic objects
 	std::map<std::string, Eigen::VectorXd> _dyn_objects_velocity;
 };
 
