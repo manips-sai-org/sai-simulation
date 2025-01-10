@@ -38,6 +38,15 @@ You can run them from build/examples/.
 ### License:
 Currently pending licensing. PLEASE DO NOT DISTRIBUTE.
 
+## Documentation
+The documentation can also be accessed online at the following [link](https://manips-sai-org.github.io/sai-simulation/)
+
+It can also be generated locally with doxygen:
+```
+cd docs
+doxygen
+```
+
 ### Project contributors:
 
 * Kyong-sok Chang
