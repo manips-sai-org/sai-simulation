@@ -14,7 +14,7 @@ simulation system with the following components:
 ### SAI library dependencies:
 Chai3d: https://github.com/manips-sai-org/chai3d
 sai-urdfreader : https://github.com/manips-sai-org/sai-urdfreader
-sai-common : https://github.com/manips-sai-org/sai-common
+sai-model : https://github.com/manips-sai-org/sai-model
 
 ### Other dependencies
 freeglut3, libxmu, libstdc++.
@@ -47,7 +47,3 @@ Currently pending licensing. PLEASE DO NOT DISTRIBUTE.
 * Francois Conti
 * Shameek Ganguly
 * Mikael Jorda
-
-### For questions, contact:
-manips.sai@gmail.com  
-mjorda@stanford.edu  
