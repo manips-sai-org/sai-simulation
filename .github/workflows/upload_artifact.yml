@@ -20,7 +20,7 @@ jobs:
           token: ${{ secrets.SAI_TOKEN }}
 
       - name: Archive Sai-simulation Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sai-simulation-artifact
           path: build/libsai-simulation.a
