@@ -13,8 +13,8 @@
 //---------------------------------------------------------------------------
 #include "chai3d/CDynamicWorld.h"
 //---------------------------------------------------------------------------
-using namespace chai3d; 
-using namespace std; 
+using namespace chai3d;
+using namespace std;
 //---------------------------------------------------------------------------
 
 //===========================================================================
@@ -24,7 +24,7 @@ using namespace std;
     \param    a_world  World to which this new object belongs to.
 */
 //===========================================================================
-void cDynamicBase::initialize(cDynamicWorld* a_world)
+void cDynamicBase::initialize(cDynamicWorld *a_world)
 {
     // store parent world
     m_dynamicWorld = a_world;
@@ -39,7 +39,6 @@ void cDynamicBase::initialize(cDynamicWorld* a_world)
     m_dynamicContacts = new cDynamicContactList();
 }
 
-
 //===========================================================================
 /*!
     Create a new link for this base.
@@ -48,10 +47,10 @@ void cDynamicBase::initialize(cDynamicWorld* a_world)
     \return   Return pointer to new link.
 */
 //===========================================================================
-cDynamicLink* cDynamicBase::newLink(cDynamicMaterial* a_dynamicMaterial)
+cDynamicLink *cDynamicBase::newLink(cDynamicMaterial *a_dynamicMaterial)
 {
     // create new link
-    cDynamicLink* newLink = new cDynamicLink(a_dynamicMaterial);
+    cDynamicLink *newLink = new cDynamicLink(a_dynamicMaterial);
     newLink->m_dynamicParentBase = this;
 
     // add child to the list of child links
@@ -60,7 +59,6 @@ cDynamicLink* cDynamicBase::newLink(cDynamicMaterial* a_dynamicMaterial)
     // return new created link
     return (newLink);
 }
-
 
 //===========================================================================
 /*!
@@ -81,7 +79,6 @@ void cDynamicBase::enableDynamics(bool a_enabled)
     }
 }
 
-
 //===========================================================================
 /*!
     Connect a child link to current one.
@@ -89,26 +86,26 @@ void cDynamicBase::enableDynamics(bool a_enabled)
     \param    a_childLink  Child link to be attached to current one.
 */
 //===========================================================================
-void cDynamicBase::linkChild(cDynamicLink* a_childLink, 
-                             const cVector3d& a_homePos,
-                             const cMatrix3d& a_homeRot)
+void cDynamicBase::linkChild(cDynamicLink *a_childLink,
+                             const cVector3d &a_homePos,
+                             const cMatrix3d &a_homeRot)
 {
     // store home values
     a_childLink->m_homePos = a_homePos;
     a_childLink->m_homeRot = a_homeRot;
-    
+
     // place frame
     m_dynBaseObject->frame.push();
-    m_dynBaseObject->frame.translate(a_homePos.x(), 
-                                     a_homePos.y(), 
+    m_dynBaseObject->frame.translate(a_homePos.x(),
+                                     a_homePos.y(),
                                      a_homePos.z());
 
     cDynVector3 axis;
     double angle = 0.0;
-    cVector3d caxis(0,0,0);
+    cVector3d caxis(0, 0, 0);
     a_homeRot.toAxisAngle(caxis, angle);
-    axis.set(caxis.x(), 
-             caxis.y(), 
+    axis.set(caxis.x(),
+             caxis.y(),
              caxis.z());
     m_dynBaseObject->frame.rotate(axis, angle);
 
@@ -117,7 +114,6 @@ void cDynamicBase::linkChild(cDynamicLink* a_childLink,
     m_dynBaseObject->frame.pop();
 }
 
-
 //===========================================================================
 /*!
     Disconnect a child link from current one.
@@ -125,12 +121,11 @@ void cDynamicBase::linkChild(cDynamicLink* a_childLink,
     \param    a_childLink  Child link to be removed.
 */
 //===========================================================================
-void cDynamicBase::unlinkChild(cDynamicLink* a_childLink)
+void cDynamicBase::unlinkChild(cDynamicLink *a_childLink)
 {
     // link dynamic object of child to current dynamic object
     m_dynBaseObject->unlink(a_childLink->m_dynObject);
 }
-
 
 //===========================================================================
 /*!
@@ -141,12 +136,12 @@ void cDynamicBase::unlinkChild(cDynamicLink* a_childLink)
     \return Return pointer to link if found, __NULL__ otherwise.
 */
 //===========================================================================
-cDynamicLink* cDynamicBase::getLink(std::string a_name)
+cDynamicLink *cDynamicBase::getLink(std::string a_name)
 {
-    vector<cDynamicLink*>::iterator i;
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    vector<cDynamicLink *>::iterator i;
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextLink = *i;
+        cDynamicLink *nextLink = *i;
         if (nextLink->m_name == a_name)
         {
             return (nextLink);
@@ -155,7 +150,6 @@ cDynamicLink* cDynamicBase::getLink(std::string a_name)
 
     return (NULL);
 }
-
 
 //===========================================================================
 /*!
@@ -169,10 +163,10 @@ cDynamicLink* cDynamicBase::getLink(std::string a_name)
 int cDynamicBase::getLinkIndex(std::string a_name)
 {
     int count = 0;
-    vector<cDynamicLink*>::iterator i;
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    vector<cDynamicLink *>::iterator i;
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextLink = *i;
+        cDynamicLink *nextLink = *i;
         if (nextLink->m_name == a_name)
         {
             return (count);
@@ -184,7 +178,6 @@ int cDynamicBase::getLinkIndex(std::string a_name)
     return (-1);
 }
 
-
 //===========================================================================
 /*!
     Get pointer to joint by passing string name.
@@ -194,12 +187,12 @@ int cDynamicBase::getLinkIndex(std::string a_name)
     \return Return pointer to joint if found, __NULL__ otherwise.
 */
 //===========================================================================
-cDynamicJoint* cDynamicBase::getJoint(std::string a_name)
+cDynamicJoint *cDynamicBase::getJoint(std::string a_name)
 {
-    vector<cDynamicJoint*>::iterator i;
-    for(i = m_dynamicJoints.begin(); i != m_dynamicJoints.end(); ++i)
+    vector<cDynamicJoint *>::iterator i;
+    for (i = m_dynamicJoints.begin(); i != m_dynamicJoints.end(); ++i)
     {
-        cDynamicJoint* nextJoint = *i;
+        cDynamicJoint *nextJoint = *i;
         if (nextJoint->m_name == a_name)
         {
             return (nextJoint);
@@ -209,6 +202,19 @@ cDynamicJoint* cDynamicBase::getJoint(std::string a_name)
     return (NULL);
 }
 
+void cDynamicBase::removeJoint(std::string a_name)
+{
+    vector<cDynamicJoint *>::iterator i;
+    for (i = m_dynamicJoints.begin(); i != m_dynamicJoints.end(); ++i)
+    {
+        cDynamicJoint *nextJoint = *i;
+        if (nextJoint->m_name == a_name)
+        {
+            m_dynamicJoints.erase(i);
+            break;
+        }
+    }
+}
 
 //===========================================================================
 /*!
@@ -222,10 +228,10 @@ cDynamicJoint* cDynamicBase::getJoint(std::string a_name)
 int cDynamicBase::getJointIndex(std::string a_name)
 {
     int count = 0;
-    vector<cDynamicJoint*>::iterator i;
-    for(i = m_dynamicJoints.begin(); i != m_dynamicJoints.end(); ++i)
+    vector<cDynamicJoint *>::iterator i;
+    for (i = m_dynamicJoints.begin(); i != m_dynamicJoints.end(); ++i)
     {
-        cDynamicJoint* nextJoint = *i;
+        cDynamicJoint *nextJoint = *i;
         if (nextJoint->m_name == a_name)
         {
             return (count);
@@ -236,7 +242,6 @@ int cDynamicBase::getJointIndex(std::string a_name)
 
     return (-1);
 }
-
 
 //===========================================================================
 /*!
@@ -249,26 +254,25 @@ int cDynamicBase::getJointIndex(std::string a_name)
     \return   Return \b true if a collision has occurred.
 */
 //===========================================================================
-bool cDynamicBase::computeOtherCollisionDetection(cVector3d& a_segmentPointA,
-                                                  cVector3d& a_segmentPointB,
-                                                  cCollisionRecorder& a_recorder,
-                                                  cCollisionSettings& a_settings)
+bool cDynamicBase::computeOtherCollisionDetection(cVector3d &a_segmentPointA,
+                                                  cVector3d &a_segmentPointB,
+                                                  cCollisionRecorder &a_recorder,
+                                                  cCollisionSettings &a_settings)
 {
     bool hit = false;
-    vector<cDynamicLink*>::iterator i;
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    vector<cDynamicLink *>::iterator i;
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextItem = *i;
-        bool collide = nextItem->computeCollisionDetection(a_segmentPointA, 
-                                                           a_segmentPointB, 
+        cDynamicLink *nextItem = *i;
+        bool collide = nextItem->computeCollisionDetection(a_segmentPointA,
+                                                           a_segmentPointB,
                                                            a_recorder,
                                                            a_settings);
 
         hit = hit || collide;
     }
-    return(hit);
+    return (hit);
 }
-
 
 //===========================================================================
 /*!
@@ -283,16 +287,15 @@ bool cDynamicBase::computeOtherCollisionDetection(cVector3d& a_segmentPointA,
 //===========================================================================
 void cDynamicBase::updateGlobalPositions(const bool a_frameOnly)
 {
-    vector<cDynamicLink*>::iterator i;
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    vector<cDynamicLink *>::iterator i;
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextItem = *i;
+        cDynamicLink *nextItem = *i;
         nextItem->computeGlobalPositions(a_frameOnly,
                                          m_globalPos,
                                          m_globalRot);
     }
 };
-
 
 //===========================================================================
 /*!
@@ -301,21 +304,20 @@ void cDynamicBase::updateGlobalPositions(const bool a_frameOnly)
     \param    a_options  Rendering options.
 */
 //===========================================================================
-void cDynamicBase::render(cRenderOptions& a_options)
+void cDynamicBase::render(cRenderOptions &a_options)
 {
     /////////////////////////////////////////////////////////////////////////
     // Render parts that are always opaque
     /////////////////////////////////////////////////////////////////////////
 
     // render all dynamic link
-    vector<cDynamicLink*>::iterator i;
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    vector<cDynamicLink *>::iterator i;
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextItem = *i;
+        cDynamicLink *nextItem = *i;
         nextItem->renderSceneGraph(a_options);
     }
 }
-
 
 //===========================================================================
 /*!
@@ -324,15 +326,15 @@ void cDynamicBase::render(cRenderOptions& a_options)
 //===========================================================================
 void cDynamicBase::copyDynamicFrameToGraphicFrame(cDynTime a_time)
 {
-    vector<cDynamicLink*>::iterator i;
+    vector<cDynamicLink *>::iterator i;
 
-    for(i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
+    for (i = m_dynamicLinks.begin(); i != m_dynamicLinks.end(); ++i)
     {
-        cDynamicLink* nextItem = *i;
+        cDynamicLink *nextItem = *i;
         cDynFrame f = nextItem->m_dynObject->globalFrame(a_time);
 
         nextItem->setLocalPos(f.translation()[0], f.translation()[1], f.translation()[2]);
-        cQuaternion q(f.rotation()[3], 
+        cQuaternion q(f.rotation()[3],
                       f.rotation()[0],
                       f.rotation()[1],
                       f.rotation()[2]);

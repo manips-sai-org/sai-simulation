@@ -13,8 +13,8 @@
 #include "chai3d/CDynamicBase.h"
 #include "chai3d/CDynamicJoint.h"
 //---------------------------------------------------------------------------
-using namespace chai3d; 
-using namespace std; 
+using namespace chai3d;
+using namespace std;
 //---------------------------------------------------------------------------
 
 //===========================================================================
@@ -22,7 +22,7 @@ using namespace std;
     Constructor of cDynamicLink.
 */
 //===========================================================================
-cDynamicLink::cDynamicLink(cDynamicMaterial* a_dynamicMaterial)
+cDynamicLink::cDynamicLink(cDynamicMaterial *a_dynamicMaterial)
 {
     // no body geometry defined yet
     m_imageModel = new cGenericObject();
@@ -52,7 +52,6 @@ cDynamicLink::cDynamicLink(cDynamicMaterial* a_dynamicMaterial)
     m_dynObject->data(this);
 }
 
-
 //===========================================================================
 /*!
     Destructor of cDynLink.
@@ -62,7 +61,6 @@ cDynamicLink::~cDynamicLink()
 {
 }
 
- 
 //===========================================================================
 /*!
     Get pointer to joint by passing index number.
@@ -70,7 +68,7 @@ cDynamicLink::~cDynamicLink()
     \param  a_index  Index number of joint.
 */
 //===========================================================================
-cDynamicJoint* cDynamicLink::getJoint(const unsigned int a_index)
+cDynamicJoint *cDynamicLink::getJoint(const unsigned int a_index)
 {
     if (a_index < m_dynamicJoints.size())
     {
@@ -82,7 +80,6 @@ cDynamicJoint* cDynamicLink::getJoint(const unsigned int a_index)
     }
 }
 
-
 //===========================================================================
 /*!
     Create a new joint.
@@ -93,15 +90,14 @@ cDynamicJoint* cDynamicLink::getJoint(const unsigned int a_index)
     \return Return pointer to joint.
 */
 //===========================================================================
-cDynamicJoint* cDynamicLink::newJoint(int a_jointType, int a_jointAxis)
+cDynamicJoint *cDynamicLink::newJoint(int a_jointType, int a_jointAxis)
 {
-    cDynamicJoint* newJoint = new cDynamicJoint(this, a_jointType, a_jointAxis);
+    cDynamicJoint *newJoint = new cDynamicJoint(this, a_jointType, a_jointAxis);
     m_dynamicJoints.push_back(newJoint);
     m_dynamicParentBase->m_dynamicJoints.push_back(newJoint);
     return (newJoint);
 }
 
- 
 //===========================================================================
 /*!
     Remove a joint.
@@ -109,23 +105,22 @@ cDynamicJoint* cDynamicLink::newJoint(int a_jointType, int a_jointAxis)
     \param    a_joint  Joint to remove from list.
 */
 //===========================================================================
-bool cDynamicLink::removeJoint(cDynamicJoint* a_joint)
+bool cDynamicLink::removeJoint(cDynamicJoint *a_joint)
 {
     // remove joint from list
-    vector<cDynamicJoint*>::iterator it;
-    for ( it=m_dynamicJoints.begin() ; it < m_dynamicJoints.end(); it++ )
+    vector<cDynamicJoint *>::iterator it;
+    for (it = m_dynamicJoints.begin(); it < m_dynamicJoints.end(); it++)
     {
         if (*it == a_joint)
         {
             m_dynamicJoints.erase(it);
         }
     }
- 
+
     // TODO: remove joint from baseNode joint list.
 
     return (false);
 }
-
 
 //===========================================================================
 /*!
@@ -137,16 +132,18 @@ bool cDynamicLink::removeJoint(cDynamicJoint* a_joint)
 void cDynamicLink::clearAllJoints()
 {
     int num = m_dynamicJoints.size();
-    for (int i=0; i<num; i++)
+    for (int i = 0; i < num; i++)
     {
-        cDynamicJoint* nextJoint = m_dynamicJoints[i];
+        cDynamicJoint *nextJoint = m_dynamicJoints[i];
+        std::string joint_name = nextJoint->m_name;
+        m_dynamicParentBase->removeJoint(joint_name);
         delete nextJoint;
     }
     m_dynamicJoints.clear();
 
     // TODO: remove joint from baseNode joint list.
+    // Done!
 }
-
 
 //===========================================================================
 /*!
@@ -155,22 +152,22 @@ void cDynamicLink::clearAllJoints()
     \param    a_childLink  Child link to be attached to current one.
 */
 //===========================================================================
-void cDynamicLink::linkChild(cDynamicLink* a_childLink, const cVector3d& a_homePos, const cMatrix3d& a_homeRot)
+void cDynamicLink::linkChild(cDynamicLink *a_childLink, const cVector3d &a_homePos, const cMatrix3d &a_homeRot)
 {
     // store home values
     a_childLink->m_homePos = a_homePos;
     a_childLink->m_homeRot = a_homeRot;
-    
+
     // place frame
     m_dynObject->frame.push();
     m_dynObject->frame.translate(a_homePos.x(), a_homePos.y(), a_homePos.z());
 
     cDynVector3 axis;
     double angle = 0.0;
-    cVector3d caxis(0,0,0);
+    cVector3d caxis(0, 0, 0);
     a_homeRot.toAxisAngle(caxis, angle);
-    axis.set(caxis.x(), 
-             caxis.y(), 
+    axis.set(caxis.x(),
+             caxis.y(),
              caxis.z());
     m_dynObject->frame.rotate(axis, angle);
 
@@ -179,7 +176,6 @@ void cDynamicLink::linkChild(cDynamicLink* a_childLink, const cVector3d& a_homeP
     m_dynObject->frame.pop();
 }
 
-
 //===========================================================================
 /*!
     Disconnect a child link from current one.
@@ -187,7 +183,7 @@ void cDynamicLink::linkChild(cDynamicLink* a_childLink, const cVector3d& a_homeP
     \param    a_childLink  Child link to be removed.
 */
 //===========================================================================
-void cDynamicLink::unlinkChild(cDynamicLink* a_childLink)
+void cDynamicLink::unlinkChild(cDynamicLink *a_childLink)
 {
     // link dynamic object of child to current dynamic object
     m_dynObject->unlink(a_childLink->m_dynObject);
@@ -195,7 +191,6 @@ void cDynamicLink::unlinkChild(cDynamicLink* a_childLink)
     // TODO: remove link from baseNode link list.
     // TODO: remove joints from baseNode joint list.
 }
-
 
 //===========================================================================
 /*!
@@ -208,24 +203,23 @@ void cDynamicLink::unlinkChild(cDynamicLink* a_childLink)
     \return   Return \b true if a collision has occurred.
 */
 //===========================================================================
-bool cDynamicLink::computeOtherCollisionDetection(cVector3d& a_segmentPointA,
-                                             cVector3d& a_segmentPointB,
-                                             cCollisionRecorder& a_recorder,
-                                             cCollisionSettings& a_settings)
+bool cDynamicLink::computeOtherCollisionDetection(cVector3d &a_segmentPointA,
+                                                  cVector3d &a_segmentPointB,
+                                                  cCollisionRecorder &a_recorder,
+                                                  cCollisionSettings &a_settings)
 {
     bool hit = false;
 
-    if (m_imageModel!=NULL)
+    if (m_imageModel != NULL)
     {
         hit = m_imageModel->computeCollisionDetection(a_segmentPointA,
                                                       a_segmentPointB,
                                                       a_recorder,
                                                       a_settings);
     }
-    
-    return(hit);
-}
 
+    return (hit);
+}
 
 //===========================================================================
 /*!
@@ -235,10 +229,13 @@ bool cDynamicLink::computeOtherCollisionDetection(cVector3d& a_segmentPointA,
     \param    a_imageModel  CHAI3D graphical image model.
 */
 //===========================================================================
-void cDynamicLink::setImageModel(cGenericObject* a_imageModel)
+void cDynamicLink::setImageModel(cGenericObject *a_imageModel)
 {
     // check object
-    if (a_imageModel == NULL) { return; }
+    if (a_imageModel == NULL)
+    {
+        return;
+    }
 
     // store pointer to body
     m_imageModel = a_imageModel;
@@ -252,7 +249,6 @@ void cDynamicLink::setImageModel(cGenericObject* a_imageModel)
     m_imageModel->setParent(this);
 }
 
-
 //===========================================================================
 /*!
     Define a multimesh object for dynamic collision detection.
@@ -260,7 +256,7 @@ void cDynamicLink::setImageModel(cGenericObject* a_imageModel)
     \param    a_collisionModel  CHAI3D multimesh model.
 */
 //===========================================================================
-void cDynamicLink::setCollisionModel(chai3d::cMultiMesh* a_collisionModel)
+void cDynamicLink::setCollisionModel(chai3d::cMultiMesh *a_collisionModel)
 {
     // store pointer to body
     m_collisionModel = a_collisionModel;
@@ -274,7 +270,6 @@ void cDynamicLink::setCollisionModel(chai3d::cMultiMesh* a_collisionModel)
     m_collisionModel->setParent(this);
 }
 
-
 //===========================================================================
 /*!
     Render this deformable mesh in OpenGL.
@@ -282,13 +277,12 @@ void cDynamicLink::setCollisionModel(chai3d::cMultiMesh* a_collisionModel)
     \param    a_options  Rendering options.
 */
 //===========================================================================
-void cDynamicLink::render(cRenderOptions& a_options)
+void cDynamicLink::render(cRenderOptions &a_options)
 {
     if (m_imageModel != NULL)
     {
         m_imageModel->renderSceneGraph(a_options);
     }
-
 
     /////////////////////////////////////////////////////////////////////////
     // Render parts that are always opaque
@@ -297,7 +291,6 @@ void cDynamicLink::render(cRenderOptions& a_options)
     {
     }
 }
-
 
 //===========================================================================
 /*!
@@ -320,13 +313,12 @@ void cDynamicLink::updateGlobalPositions(const bool a_frameOnly)
     }
 }
 
-
 //===========================================================================
 /*!
     Create a dynamic model for the object. Use principal inertia co-efficients only.
 */
 //===========================================================================
-void cDynamicLink::setMassProperties(double a_mass, const cVector3d& a_inertiaPrincipal, const cVector3d& a_centerOfMass)
+void cDynamicLink::setMassProperties(double a_mass, const cVector3d &a_inertiaPrincipal, const cVector3d &a_centerOfMass)
 {
     cMatrix3d inertia;
     inertia.set(a_inertiaPrincipal.x(), 0.0, 0.0,
@@ -340,18 +332,18 @@ void cDynamicLink::setMassProperties(double a_mass, const cVector3d& a_inertiaPr
     Create a dynamic model for the object. Use full inertia tensor.
 */
 //===========================================================================
-void cDynamicLink::setMassProperties(double a_mass, const cMatrix3d& a_inertia, const cVector3d& a_centerOfMass)
+void cDynamicLink::setMassProperties(double a_mass, const cMatrix3d &a_inertia, const cVector3d &a_centerOfMass)
 {
     m_mass = cAbs(a_mass);
-    m_inertia.set(a_inertia(0,0), a_inertia(0,1), a_inertia(0,2),
-                    a_inertia(1,0), a_inertia(1,1), a_inertia(1,2),
-                    a_inertia(2,0), a_inertia(2,1), a_inertia(2,2));
+    m_inertia.set(a_inertia(0, 0), a_inertia(0, 1), a_inertia(0, 2),
+                  a_inertia(1, 0), a_inertia(1, 1), a_inertia(1, 2),
+                  a_inertia(2, 0), a_inertia(2, 1), a_inertia(2, 2));
     m_centerOfMass = a_centerOfMass;
 
     cDynMatrix3 dyn_inertia;
-    dyn_inertia.set(a_inertia(0,0), a_inertia(0,1), a_inertia(0,2),
-                    a_inertia(1,0), a_inertia(1,1), a_inertia(1,2),
-                    a_inertia(2,0), a_inertia(2,1), a_inertia(2,2));
+    dyn_inertia.set(a_inertia(0, 0), a_inertia(0, 1), a_inertia(0, 2),
+                    a_inertia(1, 0), a_inertia(1, 1), a_inertia(1, 2),
+                    a_inertia(2, 0), a_inertia(2, 1), a_inertia(2, 2));
 
     m_dynObject->frame.push();
     m_dynObject->frame.translate(m_centerOfMass.x(), m_centerOfMass.y(), m_centerOfMass.z());
@@ -359,7 +351,6 @@ void cDynamicLink::setMassProperties(double a_mass, const cMatrix3d& a_inertia, 
     m_dynObject->dynamics.inertia(dyn_inertia);
     m_dynObject->frame.pop();
 }
-
 
 //===========================================================================
 /*!
@@ -372,20 +363,19 @@ void cDynamicLink::setMassProperties(double a_mass, const cMatrix3d& a_inertia, 
 //===========================================================================
 void cDynamicLink::buildCollisionModel(int a_collisionModel, double a_radius, double a_error)
 {
-    switch(a_collisionModel)
+    switch (a_collisionModel)
     {
-        case DYN_COLLISION_BBOX:
-            buildCollisionBox(a_radius, a_error);
-            break;
-        case DYN_COLLISION_HULL:
-            buildCollisionHull(a_radius, a_error);
-            break;
-        case DYN_COLLISION_POLY:
-            buildCollisionTriangles(a_radius, a_error);
-            break;
+    case DYN_COLLISION_BBOX:
+        buildCollisionBox(a_radius, a_error);
+        break;
+    case DYN_COLLISION_HULL:
+        buildCollisionHull(a_radius, a_error);
+        break;
+    case DYN_COLLISION_POLY:
+        buildCollisionTriangles(a_radius, a_error);
+        break;
     }
 }
-
 
 //===========================================================================
 /*!
@@ -400,7 +390,7 @@ void cDynamicLink::buildCollisionBox(double a_radius, double a_error)
     m_collisionModel->computeBoundaryBox(true);
 
     // create primitive
-    cDynPrimitive* p = m_dynObject->geometry.begin(CDYN_HULL);
+    cDynPrimitive *p = m_dynObject->geometry.begin(CDYN_HULL);
 
     // set parameters
     p->radius(a_radius);
@@ -431,7 +421,6 @@ void cDynamicLink::buildCollisionBox(double a_radius, double a_error)
     m_dynObject->geometry.end();
 }
 
-
 //===========================================================================
 /*!
     Create a collision model using a convex hull.
@@ -443,7 +432,7 @@ void cDynamicLink::buildCollisionBox(double a_radius, double a_error)
 void cDynamicLink::buildCollisionHull(double a_radius, double a_error)
 {
     // create new primitive
-    cDynPrimitive* p = m_dynObject->geometry.begin(CDYN_HULL);
+    cDynPrimitive *p = m_dynObject->geometry.begin(CDYN_HULL);
 
     // set parameters
     p->radius(a_radius);
@@ -455,7 +444,7 @@ void cDynamicLink::buildCollisionHull(double a_radius, double a_error)
 
     int numVertices = m_collisionModel->getNumVertices();
 
-    for(int i=0; i<numVertices; i++)
+    for (int i = 0; i < numVertices; i++)
     {
         cVector3d posVertex = pos + rot * m_collisionModel->getVertexPos(i);
         p->vertex(posVertex.x(), posVertex.y(), posVertex.z());
@@ -468,7 +457,6 @@ void cDynamicLink::buildCollisionHull(double a_radius, double a_error)
     m_dynObject->geometry.end();
 }
 
-
 //===========================================================================
 /*!
     Create a collision model using triangles.
@@ -479,7 +467,7 @@ void cDynamicLink::buildCollisionHull(double a_radius, double a_error)
 //===========================================================================
 void cDynamicLink::buildCollisionTriangles(double a_radius, double a_error)
 {
-    cDynPrimitive* p;
+    cDynPrimitive *p;
     double tolerance = a_error * a_error;
     double flag = false;
 
@@ -487,9 +475,9 @@ void cDynamicLink::buildCollisionTriangles(double a_radius, double a_error)
     cMatrix3d rot = m_collisionModel->getLocalRot();
 
     int numTriangles = m_collisionModel->getNumTriangles();
-    for(int i=0; i<numTriangles; i++)
+    for (int i = 0; i < numTriangles; i++)
     {
-        cMesh* mesh;
+        cMesh *mesh;
         unsigned int index;
 
         m_collisionModel->getTriangle(i, mesh, index);
@@ -508,10 +496,10 @@ void cDynamicLink::buildCollisionTriangles(double a_radius, double a_error)
                     p = m_dynObject->geometry.begin(CDYN_TRIANGLES);
                     p->radius(a_radius);
                     p->error(a_error);
-                    p->material(m_dynamicMaterial->m_dynMaterial);  
+                    p->material(m_dynamicMaterial->m_dynMaterial);
                 }
 
-                // set parameters           
+                // set parameters
                 p->vertex(pos0.x(), pos0.y(), pos0.z());
                 p->vertex(pos1.x(), pos1.y(), pos1.z());
                 p->vertex(pos2.x(), pos2.y(), pos2.z());

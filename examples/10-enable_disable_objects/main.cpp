@@ -9,7 +9,8 @@ using namespace std;
 const string world_file =
 	string(EXAMPLES_FOLDER) + "/10-enable_disable_objects/world.urdf";
 
-int main() {
+int main()
+{
 	cout << "Loading URDF world model file: " << world_file << endl;
 
 	// load simulation world
@@ -29,20 +30,22 @@ int main() {
 	sim->setDynamicsEnabled(false, "PANDA");
 	graphics->setRenderingEnabled(false, "PANDA");
 
-
 	unsigned long long counter = 0;
 	// while window is open:
-	while (graphics->isWindowOpen()) {
+	while (graphics->isWindowOpen())
+	{
 		// update simulation
 		sim->integrate();
 
 		// update graphics.
-		for (const auto& object_name : sim->getObjectNames()) {
+		for (const auto &object_name : sim->getObjectNames())
+		{
 			graphics->updateObjectGraphics(object_name,
 										   sim->getObjectPose(object_name),
 										   sim->getObjectVelocity(object_name));
 		}
-		for (const auto& robot_name : sim->getRobotNames()) {
+		for (const auto &robot_name : sim->getRobotNames())
+		{
 			graphics->updateRobotGraphics(robot_name,
 										  sim->getJointPositions(robot_name),
 										  sim->getJointVelocities(robot_name));
@@ -50,31 +53,37 @@ int main() {
 
 		graphics->renderGraphicsWorld();
 
-		if (counter % 500 == 0) {
+		if (counter % 500 == 0)
+		{
 			cout << "Resetting object pose" << endl;
 			sim->setObjectPose("Box1", init_object_pose);
 			sim->setObjectVelocity("Box1", Vector3d::Zero());
 		}
 
-		if(counter == 1025) {
+		if (counter == 1025)
+		{
 			cout << "Disabling dynamics for object" << endl;
 			sim->setDynamicsEnabled(false, "Box1");
 		}
-		if(counter == 1400) {
+		if (counter == 1400)
+		{
 			cout << "disabling rendering for object" << endl;
 			graphics->setRenderingEnabled(false, "Box1");
 		}
-		if(counter == 1500) {
+		if (counter == 1500)
+		{
 			cout << "Enabling dynamics and rendering for robot" << endl;
 			sim->setDynamicsEnabled(true, "PANDA");
 			graphics->setRenderingEnabled(true, "PANDA");
 		}
-		if(counter == 2000) {
+		if (counter == 2000)
+		{
 			cout << "Enabling dynamics and rendering for object" << endl;
 			sim->setDynamicsEnabled(true, "Box1");
 			graphics->setRenderingEnabled(true, "Box1");
 		}
-		if(counter == 2499) {
+		if (counter == 2499)
+		{
 			cout << "Exiting" << endl;
 			break;
 		}

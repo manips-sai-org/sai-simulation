@@ -17,7 +17,8 @@ bool fSimulationRunning = false;
 // sim
 void simulation(std::shared_ptr<SaiSimulation::SaiSimulation> sim);
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
 	cout << "Loading URDF world model file: " << world_fname << endl;
 
 	// load simulation world
@@ -42,18 +43,23 @@ int main(int argc, char** argv) {
 	unsigned long long counter = 0;
 
 	// while window is open:
-	while (graphics->isWindowOpen()) {
+	while (graphics->isWindowOpen())
+	{
 		// update graphics from simulation.
 		graphics->updateRobotGraphics(robot_name,
 									  sim->getJointPositions(robot_name));
 		graphics->renderGraphicsWorld();
 
-		if (counter == 300) {
-			cout << "\nenabling gravity compensation\n" << endl;
+		if (counter == 300)
+		{
+			cout << "\nenabling gravity compensation\n"
+				 << endl;
 			sim->enableGravityCompensation(true);
 		}
-		if (counter == 500) {
-			cout << "\ndisabling gravity compensation\n" << endl;
+		if (counter == 500)
+		{
+			cout << "\ndisabling gravity compensation\n"
+				 << endl;
 			sim->enableGravityCompensation(false);
 		}
 		counter++;
@@ -67,11 +73,13 @@ int main(int argc, char** argv) {
 }
 
 //------------------------------------------------------------------------------
-void simulation(std::shared_ptr<SaiSimulation::SaiSimulation> sim) {
+void simulation(std::shared_ptr<SaiSimulation::SaiSimulation> sim)
+{
 	fSimulationRunning = true;
 	double timestep = sim->timestep();
 
-	while (fSimulationRunning) {
+	while (fSimulationRunning)
+	{
 		// wait
 		usleep(timestep * 1e6);
 		// integrate forward

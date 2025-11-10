@@ -742,58 +742,6 @@ namespace SaiSimulation
 		}
 	}
 
-	std::vector<Contact3d> SaiSimulation::getContactInfo(const std::string &robot_name, const std::string &link_name)
-	{
-		std::vector<Contact3d> all_contacts;
-		std::list<cDynamicBase *>::iterator i;
-
-		std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d>> contacts_list = getContactList(robot_name, link_name);
-		for (i = _world->m_dynamicObjects.begin();
-			 i != _world->m_dynamicObjects.end(); ++i)
-		{
-			cDynamicBase *object = *i;
-			int num_contacts = object->m_dynamicContacts->getNumContacts();
-			// consider only contacting objects
-			if (num_contacts > 0)
-			{
-				for (int k = 0; k < num_contacts; k++)
-				{
-					cDynamicContact *contact =
-						object->m_dynamicContacts->getContact(k);
-					if (!contact)
-						continue; // skip if pointer is null
-					if (!contact->m_dynamicLink)
-						continue; // skip if link pointer is null
-
-					for (const auto &contact_pair : contacts_list)
-					{
-						Eigen::Vector3d contact_pos(contact->m_globalPos.x(),
-													contact->m_globalPos.y(),
-													contact->m_globalPos.z());
-						Eigen::Vector3d contact_normal(contact->m_globalNormal.x(),
-													   contact->m_globalNormal.y(),
-													   contact->m_globalNormal.z());
-						if (((contact_pos - contact_pair.first).norm() > 1e-6) || (contact_normal.dot(contact_pair.second) < 0))
-						{
-							continue;
-						}
-
-						Contact3d contact_final;
-						contact_final.position = Eigen::Vector3d(contact->m_globalPos.x(),
-																 contact->m_globalPos.y(),
-																 contact->m_globalPos.z());
-						contact_final.normal = Eigen::Vector3d(contact->m_globalNormal.x(),
-															   contact->m_globalNormal.y(),
-															   contact->m_globalNormal.z());
-						contact_final.force = contact_pair.second;
-						all_contacts.push_back(contact_final);
-					}
-				}
-			}
-		}
-		return all_contacts;
-	}
-
 	void SaiSimulation::showLinksInContact(
 		const std::string robot_or_object_name)
 	{
