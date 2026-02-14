@@ -141,7 +141,7 @@ namespace SaiSimulation
 			const auto cylinder_ptr = dynamic_cast<const SaiUrdfreader::Cylinder *>(
 				collision_ptr->geometry.get());
 			assert(cylinder_ptr);
-			// create chai sphere mesh
+			// create chai cylinder mesh
 			chai3d::cCreateCylinder(tmp_mesh, cylinder_ptr->length,
 									cylinder_ptr->radius, 32, 1, 1, true, true,
 									cVector3d(0, 0, -cylinder_ptr->length / 2));
@@ -650,7 +650,10 @@ namespace SaiSimulation
 			}
 		}
 
-		Matrix3d previous_joint_axis_alignment_rotation = Matrix3d::Identity();
+		// a map that maps a joint's name to the joint_axis_alignment_rotation_matrix with respect to its parent link  <string, Matrix3d>
+		std::map<std::string, Eigen::Matrix3d> joint_axis_alignment_map;
+
+		Matrix3d parent_joint_axis_alignment_rotation = Matrix3d::Identity();
 		// iterate over all joints
 		for (unsigned int j = 0; j < joint_names.size(); j++)
 		{
@@ -658,14 +661,14 @@ namespace SaiSimulation
 			LinkPtr urdf_parent = link_map[urdf_joint->parent_link_name];
 			LinkPtr urdf_child = link_map[urdf_joint->child_link_name];
 
+			// debug
+			// cout << "Processing joint: " << urdf_joint->name << "\tparent = "
+			// 	 << urdf_parent->name << " child = " << urdf_child->name << endl;
+
 			// determine where to add the current joint and child body
 			cDynamicLink *parent_link = NULL;
 			parent_link = model->getLink(
 				urdf_parent->name); // returns NULL if link does not exist
-
-			// cout << "joint: " << urdf_joint->name << "\tparent = " <<
-			// urdf_parent->name << " child = " << urdf_child->name << " parent_id =
-			// " << rbdl_parent_id << endl;
 
 			// create a new link
 			auto dyn_link = model->newLink(default_mat);
@@ -728,38 +731,58 @@ namespace SaiSimulation
 					abort();
 				}
 				joint_axis.normalize();
-				if (joint_axis.dot(Eigen::Vector3d::UnitX()) > 0.99)
+				if (joint_axis.dot(Eigen::Vector3d::UnitX()) > 0.999)
 				{
 					axis_type = DYN_AXIS_X;
 				}
-				else if (joint_axis.dot(Eigen::Vector3d::UnitY()) > 0.99)
+				else if (joint_axis.dot(Eigen::Vector3d::UnitY()) > 0.999)
 				{
 					axis_type = DYN_AXIS_Y;
 				}
-				else if (joint_axis.dot(Eigen::Vector3d::UnitZ()) > 0.99)
+				else if (joint_axis.dot(Eigen::Vector3d::UnitZ()) > 0.999)
 				{
 					axis_type = DYN_AXIS_Z;
 				}
 				else
 				{
-					Eigen::Vector3d required_rotation =
-						Eigen::Vector3d::UnitZ().cross(
-							joint_axis); // rotate joint axis to Z axis
+					Eigen::Vector3d source_axis = Eigen::Vector3d::UnitZ();
+					Eigen::Vector3d dest_axis = joint_axis.normalized();
+
+					Eigen::Vector3d k = source_axis.cross(dest_axis);
+					double cos = source_axis.dot(dest_axis);
+					double k_norm = k.norm();
+
 					axis_type = DYN_AXIS_Z;
-					if (required_rotation.norm() < 1e-6)
+					// Edge Cases (parallel or anti-parallel)
+					if (k_norm < 1e-6)
 					{
-						required_rotation = Eigen::Vector3d::UnitX().cross(
-							joint_axis); // rotate to X axis if it is -Z in the
-										 // urdf file
-						axis_type = DYN_AXIS_X;
+						cout << "edge case" << endl;
+						// parallel (joint_axis is approximately +Z)
+						if (cos > 0)
+						{
+							joint_axis_alignment_rotation = Eigen::Matrix3d::Identity();
+						}
+						// anti-parallel (joint_axis is approximately -Z)
+						else
+						{
+							cout << "anti-parallel case" << endl;
+							joint_axis_alignment_rotation = Eigen::Matrix3d(
+								Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX()));
+							// axis_type = DYN_AXIS_X;
+						}
 					}
-					double required_angle = asin(required_rotation.norm());
-					Eigen::Vector3d required_rotation_axis =
-						required_rotation.normalized();
-					Eigen::AngleAxisd required_rotation_aa(required_angle,
-														   required_rotation_axis);
-					joint_axis_alignment_rotation =
-						required_rotation_aa.toRotationMatrix();
+					else
+					{
+						// Algebraic Rodrigues Formula
+						// R = I + ([k]x) + ([k]x)^2 * (1 / (1 + cos))
+
+						Eigen::Matrix3d K;
+						K << 0, -k.z(), k.y(),
+							k.z(), 0, -k.x(),
+							-k.y(), k.x(), 0;
+
+						joint_axis_alignment_rotation = Eigen::Matrix3d::Identity() + K + (K * K) * (1.0 / (1.0 + cos));
+					}
 				}
 			}
 
@@ -795,19 +818,32 @@ namespace SaiSimulation
 
 			// compute the joint transformation which acts as the child link
 			// transform with respect to the parent
-			// Vector3d joint_rpy;
 			auto urdf_pos = urdf_joint->parent_to_joint_origin_transform.position;
+			// weuse the map to populate the previous_joint_axis_alignment_rotation
+			if (NULL == parent_link)
+			{
+				parent_joint_axis_alignment_rotation =
+					Matrix3d::Identity();
+			}
+			else
+			{
+				parent_joint_axis_alignment_rotation =
+					joint_axis_alignment_map[urdf_parent->name];
+			}
+
 			Vector3d joint_translation(urdf_pos.x, urdf_pos.y, urdf_pos.z);
-			joint_translation = previous_joint_axis_alignment_rotation.transpose() *
+			joint_translation = parent_joint_axis_alignment_rotation.transpose() *
 								joint_translation;
 			auto urdf_q = urdf_joint->parent_to_joint_origin_transform.rotation;
 			Quaternion<double> tmp_q(urdf_q.w, urdf_q.x, urdf_q.y, urdf_q.z);
 			cMatrix3d rot_in_parent;
 			rot_in_parent.copyfrom(
-				previous_joint_axis_alignment_rotation.transpose() *
+				parent_joint_axis_alignment_rotation.transpose() *
 				tmp_q.toRotationMatrix() * joint_axis_alignment_rotation);
 
-			previous_joint_axis_alignment_rotation = joint_axis_alignment_rotation;
+			// store the current joint_axis_alignment_rotation matrix for the child link
+			joint_axis_alignment_map[urdf_child->name] =
+				joint_axis_alignment_rotation;
 
 			if (verbose)
 			{
