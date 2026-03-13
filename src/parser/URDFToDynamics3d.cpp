@@ -168,7 +168,8 @@ namespace SaiSimulation
 		link->setCollisionModel(tmp_mmesh);
 		// build collision model (currently, only convex hull and box are
 		// supported!)
-		link->buildCollisionHull(CDYN_ERROR_EPSILON, CDYN_ERROR_EPSILON);
+		// link->buildCollisionHull(CDYN_ERROR_EPSILON, CDYN_ERROR_EPSILON);
+		link->buildCompoundCollisionHulls(CDYN_ERROR_EPSILON, CDYN_ERROR_EPSILON);
 	}
 
 	// load inertial properties from urdf link to dynamics3d link

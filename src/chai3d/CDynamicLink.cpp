@@ -457,6 +457,67 @@ void cDynamicLink::buildCollisionHull(double a_radius, double a_error)
     m_dynObject->geometry.end();
 }
 
+///===========================================================================
+/*!
+    Create a compound collision model using individual convex hulls for
+    each sub-mesh inside the collision model.
+
+    \param  a_radius  Radius around object.
+    \param  a_error  Tolerance.
+*/
+//===========================================================================
+void cDynamicLink::buildCompoundCollisionHulls(double a_radius, double a_error)
+{
+    // Ensure we have a valid multimesh
+    if (!m_collisionModel)
+        return;
+
+    int numMeshes = m_collisionModel->getNumMeshes();
+
+    // If it's empty or only has 1 mesh, fallback to standard behavior
+    if (numMeshes <= 1)
+    {
+        buildCollisionHull(a_radius, a_error);
+        return;
+    }
+
+    cVector3d basePos = m_collisionModel->getLocalPos();
+    cMatrix3d baseRot = m_collisionModel->getLocalRot();
+
+    // Iterate over each sub-mesh and create a separate hull primitive
+    for (int m = 0; m < numMeshes; m++)
+    {
+        chai3d::cMesh *subMesh = m_collisionModel->getMesh(m);
+
+        // Start a new primitive for this specific hull
+        cDynPrimitive *p = m_dynObject->geometry.begin(CDYN_HULL);
+
+        // set parameters
+        p->radius(a_radius);
+        p->error(a_error);
+        p->material(m_dynamicMaterial->m_dynMaterial);
+
+        // Account for any local offsets the sub-mesh might have relative to the multi-mesh
+        cVector3d localPos = basePos + baseRot * subMesh->getLocalPos();
+        cMatrix3d localRot = baseRot * subMesh->getLocalRot();
+
+        int numVertices = subMesh->getNumVertices();
+
+        for (int i = 0; i < numVertices; i++)
+        {
+            // FIXED: Access vertex position through the m_vertices array
+            cVector3d posVertex = localPos + localRot * subMesh->m_vertices->getLocalPos(i);
+            p->vertex(posVertex.x(), posVertex.y(), posVertex.z());
+        }
+
+        // end this specific hull primitive
+        p->end();
+    }
+
+    // end the overall geometry block containing all hulls
+    m_dynObject->geometry.end();
+}
+
 //===========================================================================
 /*!
     Create a collision model using triangles.
