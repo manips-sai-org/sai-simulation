@@ -504,6 +504,8 @@ namespace SaiSimulation
 		const std::vector<std::string> getRobotNames() const;
 		/// @brief Get the names of the objects in the simulation
 		const std::vector<std::string> getObjectNames() const;
+		/// @brief Get the names of the static objects in the simulation
+		const std::vector<std::string> getStaticObjectNames() const;
 
 		/**
 		 * @brief check is a model (robot or object) exists in the world

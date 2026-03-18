@@ -108,6 +108,16 @@ namespace SaiSimulation
 		return object_names;
 	}
 
+	const std::vector<std::string> SaiSimulation::getStaticObjectNames() const
+	{
+		std::vector<std::string> static_object_names;
+		for (const auto &it : _static_objects_pose)
+		{
+			static_object_names.push_back(it.first);
+		}
+		return static_object_names;
+	}
+
 	// get dof
 	const unsigned int SaiSimulation::dof(const std::string &robot_name) const
 	{
