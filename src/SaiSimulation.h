@@ -95,16 +95,12 @@ namespace SaiSimulation
 		void enableJointLimits(const std::string &robot_name);
 		/// @brief disable the joint limits for a given robot
 		void disableJointLimits(const std::string &robot_name);
-		/// @brief enable the gravity compensation for all robots
-		void enableGravityCompensation(const bool enable)
-		{
-			_gravity_compensation_enabled = enable;
-		}
-		/// @brief getter if the gravity compensation is enabled
-		const bool &isGravityCompensationEnabled() const
-		{
-			return _gravity_compensation_enabled;
-		}
+		/// @brief enable the gravity compensation for all robots or a specific robot
+		void enableGravityCompensation(const bool enable, const std::string &robot_name = "");
+
+		/// @brief getter if the gravity compensation is enabled for a specific robot (or any robot if empty)
+		const bool isGravityCompensationEnabled(const std::string &robot_name = "") const;
+
 		/// @brief getter for the world gravity vector
 		const Vector3d getWorldGravity() const
 		{
@@ -584,8 +580,8 @@ namespace SaiSimulation
 		double _time;
 		/// @brief simulation timestep
 		double _timestep;
-		/// @brief flag to know if gravity compensation is enabled
-		bool _gravity_compensation_enabled;
+		/// @brief flag to know if gravity compensation is enabled per robot
+		std::map<std::string, bool> _gravity_compensation_enabled;
 		/// @brief vector of simulated force sensors
 		std::vector<std::shared_ptr<ForceSensorSim>> _force_sensors;
 		/// @brief initial pose of dynamic objects

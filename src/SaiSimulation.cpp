@@ -35,7 +35,7 @@ namespace SaiSimulation
 	{
 		_is_paused = false;
 		_time = 0;
-		_gravity_compensation_enabled = false;
+		_gravity_compensation_enabled.clear();
 
 		// clean up robot names, models, torques and force sensors
 		_robot_filenames.clear();
@@ -75,6 +75,7 @@ namespace SaiSimulation
 				->setWorldGravity(_world->getGravity().eigen());
 			_applied_robot_torques[robot_name] =
 				Eigen::VectorXd::Zero(dof(robot_name));
+			_gravity_compensation_enabled[robot_name] = false;
 			setJointPositions(robot_name, _robot_models.at(robot_name)->q());
 			enableJointLimits(robot_name);
 		}
@@ -196,6 +197,51 @@ namespace SaiSimulation
 			auto dyn_joint = dyn_robot->getJoint(joint_limit.joint_name);
 			dyn_joint->removeJointLimits();
 		}
+	}
+
+	void SaiSimulation::enableGravityCompensation(const bool enable, const std::string &robot_name)
+	{
+		if (robot_name.empty())
+		{
+			// Apply to all robots if no name is specified
+			for (auto &pair : _gravity_compensation_enabled)
+			{
+				pair.second = enable;
+			}
+		}
+		else
+		{
+			// Apply only to the specific robot
+			if (!robotExistsInWorld(robot_name))
+			{
+				throw std::invalid_argument(
+					"cannot enable gravity compensation for robot [" + robot_name +
+					"] that does not exist in the simulated world");
+			}
+			_gravity_compensation_enabled.at(robot_name) = enable;
+		}
+	}
+
+	const bool SaiSimulation::isGravityCompensationEnabled(const std::string &robot_name) const
+	{
+		if (robot_name.empty())
+		{
+			// Return true if ANY robot has gravity compensation enabled
+			for (const auto &pair : _gravity_compensation_enabled)
+			{
+				if (pair.second)
+					return true;
+			}
+			return false;
+		}
+
+		if (!robotExistsInWorld(robot_name))
+		{
+			throw std::invalid_argument(
+				"cannot check gravity compensation for robot [" + robot_name +
+				"] that does not exist in the simulated world");
+		}
+		return _gravity_compensation_enabled.at(robot_name);
 	}
 
 	// set joint positions
@@ -559,11 +605,10 @@ namespace SaiSimulation
 			auto robot_model = _robot_models.at(robot_name);
 			Eigen::VectorXd gravity_torques =
 				Eigen::VectorXd::Zero(robot_model->dof());
-			if (_gravity_compensation_enabled)
+			if (_gravity_compensation_enabled.at(robot_name))
 			{
 				gravity_torques = robot_model->jointGravityVector();
 			}
-
 			auto robot = _world->getBaseNode(robot_name);
 			uint q_ind_counter = 0;
 			chai3d::cVector3d sph_tau;
