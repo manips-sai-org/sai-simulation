@@ -306,6 +306,13 @@ namespace SaiSimulation
 		getContactList(const ::std::string &object_name) const;
 
 		/**
+		 * @brief Checks if the specified robot is currently colliding with itself.
+		 * * @param robot_name The name of the robot to check.
+		 * @return true if a self-collision is detected, false otherwise.
+		 */
+		bool isSelfColliding(const std::string &robot_name);
+
+		/**
 		 * @brief Adds a simulated sorce sensor to a given robot at a given link,
 		 * with possibility to filter the force data with a second order butterworth
 		 * filter. Only one force sensor can be added to a given link

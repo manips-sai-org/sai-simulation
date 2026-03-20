@@ -895,6 +895,71 @@ namespace SaiSimulation
 		return _world->getContactList(object_name, object_link_name);
 	}
 
+	bool SaiSimulation::isSelfColliding(const std::string &robot_name)
+	{
+		std::vector<cDynamicContact *> robot_contacts;
+
+		// Gather all contacts occurring on this specific robot
+		for (auto it = _world->m_dynamicObjects.begin(); it != _world->m_dynamicObjects.end(); ++it)
+		{
+			cDynamicBase *object = *it;
+			if (object->m_name == robot_name)
+			{
+				int num_contacts = object->m_dynamicContacts->getNumContacts();
+				for (int k = 0; k < num_contacts; k++)
+				{
+					cDynamicContact *contact = object->m_dynamicContacts->getContact(k);
+					if (contact && contact->m_dynamicLink)
+					{
+						robot_contacts.push_back(contact);
+					}
+				}
+				// Once we find the robot and get its contacts, we can break the object loop
+				break;
+			}
+		}
+
+		// If there are less than 2 contact points, no self-collision is possible
+		if (robot_contacts.size() < 2)
+		{
+			return false;
+		}
+
+		// Tries to correlate the contacts to find a matching pair
+		for (size_t i = 0; i < robot_contacts.size(); ++i)
+		{
+			for (size_t j = i + 1; j < robot_contacts.size(); ++j)
+			{
+				cDynamicContact *c1 = robot_contacts[i];
+				cDynamicContact *c2 = robot_contacts[j];
+
+				// Condition A: The contacts must be on different links
+				if (c1->m_dynamicLink->m_name != c2->m_dynamicLink->m_name)
+				{
+					Eigen::Vector3d pos1(c1->m_globalPos.x(), c1->m_globalPos.y(), c1->m_globalPos.z());
+					Eigen::Vector3d pos2(c2->m_globalPos.x(), c2->m_globalPos.y(), c2->m_globalPos.z());
+
+					// Condition B: The global positions must be essentially identical
+					// Using 1e-4 as a standard physics engine floating-point tolerance
+					if ((pos1 - pos2).norm() < 1e-4)
+					{
+						Eigen::Vector3d norm1(c1->m_globalNormal.x(), c1->m_globalNormal.y(), c1->m_globalNormal.z());
+						Eigen::Vector3d norm2(c2->m_globalNormal.x(), c2->m_globalNormal.y(), c2->m_globalNormal.z());
+
+						// Condition C: The normals must be opposing (dot product near -1)
+						if (norm1.dot(norm2) < -0.98)
+						{
+							// There if a self-collision
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	void SaiSimulation::addSimulatedForceSensor(
 		const std::string &robot_name, const std::string &link_name,
 		const Eigen::Affine3d transform_in_link,
