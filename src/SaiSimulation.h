@@ -313,6 +313,23 @@ namespace SaiSimulation
 		bool isSelfColliding(const std::string &robot_name);
 
 		/**
+		 * @brief Checks if there is a self-collision specifically among a provided list of links.
+		 * * @param robot_name The name of the robot to check.
+		 * @param link_names A list of link names. The function returns true only if
+		 * two links from this specific list collide with each other.
+		 * @return true if a self-collision among the specified links is detected, false otherwise.
+		 */
+		bool isSelfCollisionAmongLinks(const std::string &robot_name, const std::vector<std::string> &link_names);
+
+		/**
+		 * @brief Checks if at least one link from a given list is currently in contact.
+		 * * @param robot_name The name of the robot to check.
+		 * @param link_names A list of link names to monitor for contacts.
+		 * @return true if at least one of the specified links is in contact, false otherwise.
+		 */
+		bool isAnyLinkInContact(const std::string &robot_name, const std::vector<std::string> &link_names);
+
+		/**
 		 * @brief Adds a simulated sorce sensor to a given robot at a given link,
 		 * with possibility to filter the force data with a second order butterworth
 		 * filter. Only one force sensor can be added to a given link

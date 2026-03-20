@@ -960,6 +960,125 @@ namespace SaiSimulation
 		return false;
 	}
 
+	bool SaiSimulation::isSelfCollisionAmongLinks(const std::string &robot_name, const std::vector<std::string> &link_names)
+	{
+		// A self-collision requires at least 2 links. If the list is too small, it's impossible.
+		if (link_names.size() < 2)
+		{
+			return false;
+		}
+
+		std::vector<cDynamicContact *> relevant_contacts;
+
+		// 1. Find the robot and collect ONLY contacts happening on the specified links
+		for (auto it = _world->m_dynamicObjects.begin(); it != _world->m_dynamicObjects.end(); ++it)
+		{
+			cDynamicBase *object = *it;
+			if (object->m_name == robot_name)
+			{
+				int num_contacts = object->m_dynamicContacts->getNumContacts();
+				for (int k = 0; k < num_contacts; k++)
+				{
+					cDynamicContact *contact = object->m_dynamicContacts->getContact(k);
+					if (contact && contact->m_dynamicLink)
+					{
+						std::string current_link = contact->m_dynamicLink->m_name;
+
+						// If this contact is on one of our target links, save it for correlation
+						if (std::find(link_names.begin(), link_names.end(), current_link) != link_names.end())
+						{
+							relevant_contacts.push_back(contact);
+						}
+					}
+				}
+				break; // Found the robot and processed its contacts, exit the object loop
+			}
+		}
+
+		// If we didn't find at least 2 contacts among the target links, a self-collision is impossible
+		if (relevant_contacts.size() < 2)
+		{
+			return false;
+		}
+
+		// 2. Correlate the filtered contacts to find a matching pair
+		for (size_t i = 0; i < relevant_contacts.size(); ++i)
+		{
+			for (size_t j = i + 1; j < relevant_contacts.size(); ++j)
+			{
+				cDynamicContact *c1 = relevant_contacts[i];
+				cDynamicContact *c2 = relevant_contacts[j];
+
+				// Condition A: They must be on DIFFERENT links within the provided list
+				if (c1->m_dynamicLink->m_name != c2->m_dynamicLink->m_name)
+				{
+					Eigen::Vector3d pos1(c1->m_globalPos.x(), c1->m_globalPos.y(), c1->m_globalPos.z());
+					Eigen::Vector3d pos2(c2->m_globalPos.x(), c2->m_globalPos.y(), c2->m_globalPos.z());
+
+					// Condition B: The global positions must be essentially identical (1e-4 tolerance)
+					if ((pos1 - pos2).norm() < 1e-4)
+					{
+						Eigen::Vector3d norm1(c1->m_globalNormal.x(), c1->m_globalNormal.y(), c1->m_globalNormal.z());
+						Eigen::Vector3d norm2(c2->m_globalNormal.x(), c2->m_globalNormal.y(), c2->m_globalNormal.z());
+
+						// Condition C: The normals must be directly opposing
+						if (norm1.dot(norm2) < -0.98)
+						{
+							// All conditions met: two links from the list are colliding!
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	bool SaiSimulation::isAnyLinkInContact(const std::string &robot_name, const std::vector<std::string> &link_names)
+	{
+		// If the provided list is empty, there's nothing to check
+		if (link_names.empty())
+		{
+			return false;
+		}
+
+		// Find the specified robot in the simulation world
+		for (auto it = _world->m_dynamicObjects.begin(); it != _world->m_dynamicObjects.end(); ++it)
+		{
+			cDynamicBase *object = *it;
+			if (object->m_name == robot_name)
+			{
+				int num_contacts = object->m_dynamicContacts->getNumContacts();
+
+				// Iterate through all contacts currently happening on this robot
+				for (int k = 0; k < num_contacts; k++)
+				{
+					cDynamicContact *contact = object->m_dynamicContacts->getContact(k);
+
+					// Ensure the pointers are valid to avoid segfaults
+					if (contact && contact->m_dynamicLink)
+					{
+						std::string current_link = contact->m_dynamicLink->m_name;
+
+						// Check if the link experiencing this contact is in our target list
+						if (std::find(link_names.begin(), link_names.end(), current_link) != link_names.end())
+						{
+							// We found a match! Return true immediately.
+							return true;
+						}
+					}
+				}
+
+				// We found the robot and checked its contacts, no need to check other objects in the world
+				break;
+			}
+		}
+
+		// If we complete the loops without returning true, none of the target links are in contact
+		return false;
+	}
+
 	void SaiSimulation::addSimulatedForceSensor(
 		const std::string &robot_name, const std::string &link_name,
 		const Eigen::Affine3d transform_in_link,
