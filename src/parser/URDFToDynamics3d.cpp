@@ -471,6 +471,14 @@ namespace SaiSimulation
 			// create 1 spherical joint
 			jointBodyS = linkObject->newJoint(DYN_JOINT_SPHERICAL);
 
+			if (object_ptr->damping > 0.0)
+			{
+				jointBodyX->setDamping(object_ptr->damping);
+				jointBodyY->setDamping(object_ptr->damping);
+				jointBodyZ->setDamping(object_ptr->damping);
+				jointBodyS->setDamping(object_ptr->damping);
+			}
+
 			// load object graphics, must have atleast one
 			for (const auto collision_ptr : object_ptr->collision_array)
 			{
